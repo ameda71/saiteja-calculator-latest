@@ -10,8 +10,8 @@ pipeline {
         DEPLOY_YAML = 'kubernetes/deployment.yaml'  // Path to Kubernetes deployment YAML
         CLUSTER_NAME = 'cluster-1'  // GKE Cluster name
         ZONE = 'us-central1-c'  // GKE Cluster zone
-        IMAGE_NAME = "javasonarqube"  // Docker image name
-        DOCKER_REPO = "saiteja12121/mvnjavasonar"  // Docker repository
+        IMAGE_NAME = "java_calculator"  // Docker image name
+        DOCKER_REPO = "saicharan12121/java_calculator"  // Docker repository
     }
 
     stages {
