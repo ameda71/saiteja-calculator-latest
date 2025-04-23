@@ -8,7 +8,7 @@ pipeline {
         DOCKER_HUB_USER = credentials('dockerhub')  // Docker Hub credentials
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-key')  // Google Cloud credentials for GCP
         DEPLOY_YAML = 'kubernetes/deployment.yaml'  // Path to Kubernetes deployment YAML
-        CLUSTER_NAME = 'your-gke-cluster'  // GKE Cluster name
+        CLUSTER_NAME = 'cluster-1'  // GKE Cluster name
         ZONE = 'us-central1-c'  // GKE Cluster zone
         IMAGE_NAME = "javasonarqube"  // Docker image name
         DOCKER_REPO = "saiteja12121/mvnjavasonar"  // Docker repository
