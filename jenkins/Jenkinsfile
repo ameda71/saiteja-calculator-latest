@@ -1,0 +1,115 @@
+pipeline {
+    agent any
+
+    environment {
+        SONAR_URL = 'http://192.168.2.174:9000'  // SonarQube server URL
+        SONAR_TOKEN = credentials('sonar-token')  // Jenkins credentials for SonarQube token
+        IMAGE_TAG = "saiteja"  // Image tag for Docker
+        DOCKER_HUB_USER = credentials('docker-hub')  // Docker Hub credentials
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-key')  // Google Cloud credentials for GCP
+        DEPLOY_YAML = 'kubernetes/deployment.yaml'  // Path to Kubernetes deployment YAML
+        CLUSTER_NAME = 'your-gke-cluster'  // GKE Cluster name
+        ZONE = 'us-central1-c'  // GKE Cluster zone
+        IMAGE_NAME = "javasonarqube"  // Docker image name
+        DOCKER_REPO = "saiteja12121/mvnjavasonar"  // Docker repository
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                // Clone the repository from GitHub
+                git branch: 'main', url: 'https://github.com/Saicharan619/DEVOPS-JAVA2.git'
+            }
+        }
+
+        stage('Build with Maven') {
+            steps {
+                // Run Maven to clean and package the application
+                sh 'mvn clean package'
+            }
+        }
+
+        stage("Build & SonarQube Analysis") {
+            steps {
+                withSonarQubeEnv('sonar') {
+                    // Run Maven with SonarQube analysis
+                    sh ''' 
+                    mvn clean verify sonar:sonar \
+                        -Dsonar.projectKey=demo_project \
+                        -Dsonar.projectName='demo_project' \
+                        -Dsonar.host.url=${SONAR_URL} \
+                        -Dsonar.token=${SONAR_TOKEN}
+                    '''
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                // Build Docker image from Dockerfile
+                sh 'docker build -t ${IMAGE_NAME} .'
+            }
+        }
+
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                script {
+                    // Login to Docker Hub and push the image
+                    sh '''
+                    echo "${DOCKER_HUB_USER_PSW}" | docker login -u "${DOCKER_HUB_USER_USR}" --password-stdin
+                    docker tag ${IMAGE_NAME} ${DOCKER_REPO}:latest
+                    docker push ${DOCKER_REPO}:latest
+                    '''
+                }
+            }
+        }
+
+        stage('GCP Login') {
+            steps {
+                withCredentials([file(credentialsId: 'gcp-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    // Authenticate with Google Cloud
+                    sh '''
+                    echo "Using credentials from: $GOOGLE_APPLICATION_CREDENTIALS"
+                    gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+                    '''
+                }
+            }
+        }
+
+        stage('Update Deployment Files') {
+            steps {
+                // Update the deployment YAML file with the latest image tag
+                sh '''
+                sed -i "s|image: .*|image: ${DOCKER_REPO}:latest|" $DEPLOY_YAML
+                '''
+            }
+        }
+
+        stage('Deploy to GKE') {
+            steps {
+                // Apply the Kubernetes deployment and service
+                sh '''
+                gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${ZONE} --project your-gcp-project-id
+                kubectl apply -f $DEPLOY_YAML
+                '''
+            }
+        }
+
+        stage('Wait for Deployment') {
+            steps {
+                // Wait for the Kubernetes service to become available
+                sh 'kubectl get svc'
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo "Application successfully deployed in Kubernetes!"
+        }
+        failure {
+            echo "Build failed!"
+        }
+    }
+}
