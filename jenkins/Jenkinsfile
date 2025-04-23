@@ -18,7 +18,7 @@ pipeline {
 
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/Saicharan619/DEVOPS-JAVA2.git'
+                git branch: 'main', url: 'https://github.com/Saicharan619/devops-end-to-end-java1.git'
             }
         }
 
@@ -32,9 +32,12 @@ pipeline {
             steps {
                 withSonarQubeEnv('sonar') {
                     sh '''
-                    mvn sonar:sonar \
-                        -Dsonar.projectKey=my-project \
-                        -Dsonar.token=${SONAR_TOKEN}
+                   mvn clean verify sonar:sonar \
+                  -Dsonar.projectKey=java-project2 \
+                  -Dsonar.projectName='java-project2' \
+                  -Dsonar.host.url=http://192.168.2.174:9000 \
+                  -Dsonar.token=${SONAR_TOKEN}
+                   
                     '''
                 }
             }
