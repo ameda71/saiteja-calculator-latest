@@ -15,62 +15,65 @@ pipeline {
     }
 
     stages {
+
         stage('Clone Repository') {
             steps {
-                // Clone the repository from GitHub
                 git branch: 'main', url: 'https://github.com/Saicharan619/DEVOPS-JAVA2.git'
             }
         }
 
         stage('Build with Maven') {
             steps {
-                // Run Maven to clean and package the application
                 sh 'mvn clean package'
             }
         }
 
-        stage("Build & SonarQube Analysis") {
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar') {
-                    // Run Maven with SonarQube analysis
-                    sh ''' 
-                    mvn clean verify sonar:sonar \
-                        -Dsonar.projectKey=demo_project \
-                        -Dsonar.projectName='demo_project' \
-                        -Dsonar.host.url=${SONAR_URL} \
+                    sh '''
+                    mvn sonar:sonar \
+                        -Dsonar.projectKey=my-project \
                         -Dsonar.token=${SONAR_TOKEN}
                     '''
                 }
             }
         }
 
-        stage('Build Docker Image') {
+        stage("Quality Gate") {
             steps {
-                // Build Docker image from Dockerfile
-                sh 'docker build -t ${IMAGE_NAME} .'
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
-        stage('Push Docker Image to Docker Hub') {
+        stage('Build Docker Image') {
             steps {
-                script {
-                    // Login to Docker Hub and push the image
+                sh '''
+                docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .
+                docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${DOCKER_REPO}:${BUILD_NUMBER}
+                '''
+            }
+        }
+
+        stage("Docker Login & Push") {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                     sh '''
-                    echo "${DOCKER_HUB_USER_PSW}" | docker login -u "${DOCKER_HUB_USER_USR}" --password-stdin
-                    docker tag ${IMAGE_NAME} ${DOCKER_REPO}:latest
-                    docker push ${DOCKER_REPO}:latest
+                    echo $PASSWORD | docker login -u $USERNAME --password-stdin
+                    docker push ${DOCKER_REPO}:${BUILD_NUMBER}
                     '''
                 }
             }
         }
 
-        stage('GCP Login') {
+        stage("Google Cloud Login") {
             steps {
                 withCredentials([file(credentialsId: 'gcp-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                    // Authenticate with Google Cloud
                     sh '''
-                    echo "Using credentials from: $GOOGLE_APPLICATION_CREDENTIALS"
                     gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+                    gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${ZONE} --project saicharan-452306
                     '''
                 }
             }
@@ -78,38 +81,41 @@ pipeline {
 
         stage('Update Deployment Files') {
             steps {
-                // Update the deployment YAML file with the latest image tag
                 sh '''
-                sed -i "s|image: .*|image: ${DOCKER_REPO}:latest|" $DEPLOY_YAML
+                sed -i "s|image: .*|image: ${DOCKER_REPO}:${BUILD_NUMBER}|" $DEPLOY_YAML
                 '''
             }
         }
 
-        stage('Deploy to GKE') {
+        stage('Deploy to Cluster') {
             steps {
-                // Apply the Kubernetes deployment and service
                 sh '''
-                gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${ZONE} --project your-gcp-project-id
                 kubectl apply -f $DEPLOY_YAML
+                kubectl apply -f kubernetes/service.yaml
+                echo "Waiting for LoadBalancer IP to be assigned..."
+                sleep 50
+                kubectl get svc
+                sleep 20
                 '''
             }
         }
 
-        stage('Wait for Deployment') {
+        stage('Get Service') {
             steps {
-                // Wait for the Kubernetes service to become available
-                sh 'kubectl get svc'
+                sh '''
+                echo "Fetching final LoadBalancer IP..."
+                kubectl get svc
+                '''
             }
         }
-
     }
 
     post {
         success {
-            echo "Application successfully deployed in Kubernetes!"
+            echo "🎉 Application successfully deployed in GKE with Docker and SonarQube integration!"
         }
         failure {
-            echo "Build failed!"
+            echo "❌ Build failed. Check console output for more info."
         }
     }
 }
