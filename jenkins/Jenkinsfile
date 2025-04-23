@@ -1,9 +1,5 @@
 pipeline {
     agent any
-    tools {
-        jdk 'jdk21'
-    }
-
     environment {
         SONAR_URL = 'http://192.168.2.174:9000'  // SonarQube server URL
         SONAR_TOKEN = credentials('sonar-token')  // Jenkins credentials for SonarQube token
