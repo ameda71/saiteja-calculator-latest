@@ -18,7 +18,7 @@ resource "google_container_cluster" "primary" {
 }
  
 // Output the cluster's name and endpoint
-output "cluster_name" {
+output "CLUSTER_NAME" {
   value = google_container_cluster.primary.name
 }
 
