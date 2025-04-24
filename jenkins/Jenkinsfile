@@ -1,127 +1,115 @@
 pipeline {
     agent any
     environment {
-        SONAR_URL = 'http://192.168.2.174:9000'  // SonarQube server URL
-        SONAR_TOKEN = credentials('sonar-token')  // Jenkins credentials for SonarQube token
-        IMAGE_TAG = "java_calculator"  // Image tag for Docker
-        DOCKER_HUB_USER = credentials('dockerhub')  // Docker Hub credentials
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-key')  // Google Cloud credentials for GCP
-        DEPLOY_YAML = 'kubernetes/deployment.yaml'  // Path to Kubernetes deployment YAML
-        CLUSTER_NAME = 'cluster-1'  // GKE Cluster name
-        ZONE = 'us-central1-c'  // GKE Cluster zone
-        IMAGE_NAME = "java_calculator"  // Docker image name
-        DOCKER_REPO = "saicharan12121/java_calculator"  // Docker repository
+        SONAR_URL = 'http://192.168.2.174:9000'
+        SONAR_TOKEN = credentials('sonar-token')
+        IMAGE_TAG = "java_calculator"
+        DOCKER_HUB_USER = credentials('dockerhub')
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-key')
+        DEPLOY_YAML = 'kubernetes/deployment.yaml'
+        CLUSTER_NAME = 'cluster-1'
+        ZONE = 'us-central1-c'
+        IMAGE_NAME = "java_calculator"
+        DOCKER_REPO = "saicharan12121/java_calculator"
     }
 
     stages {
-
         stage('Clone Repository') {
             steps {
                 git branch: 'main', url: 'https://github.com/Saicharan619/devops-end-to-end-java1.git'
             }
         }
-    stage('Maven Build') {
-    steps {
-        sh 'mvn clean package'
-    }
-}
 
-stage('SonarQube Analysis') {
-    steps {
-        withSonarQubeEnv('sonar') {
-            sh '''
-                mvn verify sonar:sonar \
-                  -Dsonar.projectKey=java-project2 \
-                  -Dsonar.projectName="java-project2" \
-                  -Dsonar.host.url=http://192.168.2.174:9000 \
-                  -Dsonar.token=$SONAR_TOKEN
-            '''
-        }
-    }
-}
-
-
-        stage("Quality Gate") {
-    steps {
-        script {
-            try {
-                timeout(time: 10, unit: 'SECONDS') {
-                    waitForQualityGate abortPipeline: true
-                }
-            } catch (err) {
-                echo "Quality Gate check skipped or failed to complete in time: ${err}"
+        stage('Maven Build') {
+            steps {
+                sh 'mvn clean package'
             }
         }
-    }
-}
 
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar') {
+                    sh '''
+                        mvn verify sonar:sonar \
+                          -Dsonar.projectKey=java-project2 \
+                          -Dsonar.projectName="java-project2" \
+                          -Dsonar.host.url=http://192.168.2.174:9000 \
+                          -Dsonar.token=$SONAR_TOKEN
+                    '''
+                }
+            }
+        }
 
+        stage("Quality Gate") {
+            steps {
+                script {
+                    try {
+                        timeout(time: 10, unit: 'SECONDS') {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    } catch (err) {
+                        echo "Quality Gate check skipped or failed to complete in time: ${err}"
+                    }
+                }
+            }
+        }
 
         stage('Build Docker Image') {
-    steps {
-        sh '''
-        docker build -f Dockerfile -t ${IMAGE_NAME}:${BUILD_NUMBER} .
-        docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${DOCKER_REPO}:${BUILD_NUMBER}
-        '''
-    }
-}
-
-
+            steps {
+                sh '''
+                    docker build -f Dockerfile -t ${IMAGE_NAME}:${BUILD_NUMBER} .
+                    docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${DOCKER_REPO}:${BUILD_NUMBER}
+                '''
+            }
+        }
 
         stage("Docker Login & Push") {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                     sh '''
-                    echo $PASSWORD | docker login -u $USERNAME --password-stdin
-                    docker push ${DOCKER_REPO}:${BUILD_NUMBER}
+                        echo $PASSWORD | docker login -u $USERNAME --password-stdin
+                        docker push ${DOCKER_REPO}:${BUILD_NUMBER}
                     '''
                 }
             }
         }
- stage("Google Cloud Login") {
+
+        stage("Google Cloud Login") {
             steps {
                 withCredentials([file(credentialsId: 'gcp-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                     sh '''
-                     echo "Using credentials from: $GOOGLE_APPLICATION_CREDENTIALS"
-                    gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
-                
+                        echo "Using credentials from: $GOOGLE_APPLICATION_CREDENTIALS"
+                        gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
                     '''
                 }
             }
         }
-        
-
-
-       stage('Terraform Apply (Cluster)') {
-            steps {
-                script {
-                    // Change to the directory containing the Terraform configuration files
-                    dir('terraform') {
-                        sh '''
-                        terraform init
-                        terraform plan
-                        terraform apply --auto-approve
-                        '''
-                    }
-                }
-            }
-        }
-        
-
-       
 
         stage('Update Deployment Files') {
             steps {
                 sh '''
-                sed -i "s|image: .*|image: ${DOCKER_REPO}:${BUILD_NUMBER}|" $DEPLOY_YAML
+                    sed -i "s|image: .*|image: ${DOCKER_REPO}:${BUILD_NUMBER}|" $DEPLOY_YAML
                 '''
             }
         }
-         stage('Wait for Cluster Access') {
+
+        stage('Terraform Apply (Cluster)') {
+            steps {
+                dir('terraform') {
+                    sh '''
+                        terraform init
+                        terraform plan
+                        terraform apply --auto-approve
+                    '''
+                }
+            }
+        }
+
+        stage('Wait for Cluster Access') {
             steps {
                 retry(3) {
                     sh '''
-                    sleep 20
+                        sleep 20
                         gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${ZONE} --project saicharan-452306
                     '''
                 }
@@ -131,12 +119,12 @@ stage('SonarQube Analysis') {
         stage('Deploy to Cluster') {
             steps {
                 sh '''
-                kubectl apply -f $DEPLOY_YAML
-                kubectl apply -f kubernetes/service.yaml
-                echo "Waiting for LoadBalancer IP to be assigned..."
-                sleep 50
-                kubectl get svc
-                sleep 20
+                    kubectl apply -f $DEPLOY_YAML
+                    kubectl apply -f kubernetes/service.yaml
+                    echo "Waiting for LoadBalancer IP to be assigned..."
+                    sleep 50
+                    kubectl get svc
+                    sleep 20
                 '''
             }
         }
@@ -144,8 +132,8 @@ stage('SonarQube Analysis') {
         stage('Get Service') {
             steps {
                 sh '''
-                echo "Fetching final LoadBalancer IP..."
-                kubectl get svc
+                    echo "Fetching final LoadBalancer IP..."
+                    kubectl get svc
                 '''
             }
         }
