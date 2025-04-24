@@ -6,8 +6,9 @@ provider "google" {
 
 // Create a Google Kubernetes Engine (GKE) cluster
 resource "google_container_cluster" "primary" {
-  name     = var.CLUSTER_NAME  // Cluster name
-  location = var.zone          // GKE zone
+  name     = var.cluster_name // Cluster name
+  location = var.zone      // GKE zone
+}         
 
   initial_node_count = var.initial_node_count  // Number of nodes in the cluster
 
