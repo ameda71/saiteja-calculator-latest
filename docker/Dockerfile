@@ -5,7 +5,7 @@ FROM openjdk:21-jdk-slim
 WORKDIR /app
 
 # Copy the built jar file into the container
-COPY target/demo-0.0.1-SNAPSHOT.jar app.jar
+COPY ../target/demo-0.0.1-SNAPSHOT.jar app.jar
 
 # Expose the application port
 EXPOSE 8085
