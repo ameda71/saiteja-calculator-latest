@@ -98,8 +98,8 @@ pipeline {
                 dir('terraform') {
                     sh '''
                         terraform init
-                        terraform plan
-                        terraform apply --auto-approve
+                        terraform plan -var="cluster_name=${CLUSTER_NAME}"
+                        terraform apply -var="cluster_name=${CLUSTER_NAME}" --auto-approve
                     '''
                 }
             }
