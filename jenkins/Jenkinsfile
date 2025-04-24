@@ -23,8 +23,6 @@ pipeline {
     stage( "maven" ){
         steps{
             sh """
-            pwd
-            ls
             mvn clean package
             
             """
