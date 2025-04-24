@@ -20,30 +20,26 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/Saicharan619/devops-end-to-end-java1.git'
             }
         }
-    stage( "maven" ){
-        steps{
-            sh """
-            mvn clean package
-            
-            """
+    stage('Maven Build') {
+    steps {
+        sh 'mvn clean package'
+    }
+}
+
+stage('SonarQube Analysis') {
+    steps {
+        withSonarQubeEnv('sonar') {
+            sh '''
+                mvn verify sonar:sonar \
+                  -Dsonar.projectKey=java-project2 \
+                  -Dsonar.projectName="java-project2" \
+                  -Dsonar.host.url=http://192.168.2.174:9000 \
+                  -Dsonar.token=$SONAR_TOKEN
+            '''
         }
     }
+}
 
-     
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonar') {
-                    sh '''
-                   mvn clean verify sonar:sonar \
-                  -Dsonar.projectKey=java-project2 \
-                  -Dsonar.projectName='java-project2' \
-                  -Dsonar.host.url=http://192.168.2.174:9000 \
-                  -Dsonar.token=${SONAR_TOKEN}
-                   
-                    '''
-                }
-            }
-        }
 
         stage("Quality Gate") {
             steps {
