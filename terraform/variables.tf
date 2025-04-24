@@ -2,6 +2,7 @@
 variable "project_id" {
   description = "The GCP project ID"  // GCP Project ID
   type        = string
+  default     = "saicharan-452306"  
 }
 
 // Define the region for the GKE cluster
