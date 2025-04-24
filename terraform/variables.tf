@@ -20,10 +20,10 @@ variable "zone" {
 }
 
 // Define the name of the GKE cluster
-variable "CLUSTER_NAME" {
+variable "cluster_name" {
   description = "The name of the GKE cluster"  // Cluster name
   type        = string
-  default     = "my-gke-cluster"  // Default name for the cluster
+  default     = "my-gke-cluster" // Default name for the cluster
 }
 
 // Define the initial number of nodes in the cluster
