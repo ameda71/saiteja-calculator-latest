@@ -13,9 +13,10 @@ resource "google_container_cluster" "primary" {
 
   node_config {
     machine_type = var.node_machine_type  // Node machine type (e.g., e2-medium)
+    disk_size_gb = 20
   }
 }
-
+ 
 // Output the cluster's name and endpoint
 output "cluster_name" {
   value = google_container_cluster.primary.name
