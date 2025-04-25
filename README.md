@@ -1,6 +1,7 @@
-# devops-end-to-end-java1
+devops-end-to-end-java1
 Maven + SonarQube + Docker + GCP Kubernetes CI/CD Pipeline 🚀
-This project demonstrates a complete CI/CD pipeline leveraging Jenkins, Maven, SonarQube, Docker, Docker Hub, and Google Kubernetes Engine (GKE). It automates the process of building a Java application, performing code quality analysis, containerizing it, and deploying it to a Kubernetes cluster on GCP.
+
+This project demonstrates a complete CI/CD pipeline using Jenkins, Maven, SonarQube, Docker, Docker Hub, and Google Kubernetes Engine (GKE). It automates the process of building a Java application, running code quality analysis, containerizing it, and deploying it to a Kubernetes cluster on GCP.
 
 🔧 Tech Stack
 Java + Maven: Build and manage dependencies for the Java application.
@@ -13,7 +14,7 @@ Docker: Containerizes the Java application for deployment.
 
 Docker Hub: Stores and distributes Docker images.
 
-Google Cloud Platform (GKE): Deploy the containerized application to Kubernetes.
+Google Cloud Platform (GKE): Deploys the containerized application to Kubernetes.
 
 Terraform (optional): Provision infrastructure for GKE clusters.
 
@@ -33,10 +34,10 @@ Authenticate to GCP: Set up authentication for GCP services.
 
 Update Kubernetes Deployment: Modify the Kubernetes deployment YAML with the new Docker image.
 
-Deploy to GKE: Apply the Kubernetes manifest to deploy the application on Google Kubernetes Engine (GKE).
+Deploy to GKE: Apply the Kubernetes manifest to deploy the application on GKE.
 
 🔐 Jenkins Credentials Required
-Make sure the following credentials are set up in Jenkins:
+Ensure the following credentials are set up in Jenkins:
 
 sonar-token: SonarQube access token for analysis.
 
@@ -45,7 +46,7 @@ docker-hub: Docker Hub username and password for pushing images.
 gcp-key: GCP service account key for deploying to GKE.
 
 ⚙️ How to Trigger the Pipeline
-You can trigger the Jenkins pipeline manually or automatically via webhook on commit.
+You can trigger the Jenkins pipeline either manually or automatically via a webhook on commit.
 
 🎯 Outcome
 Java Application: Automatically built using Maven.
@@ -66,3 +67,4 @@ Migrate from raw Kubernetes YAML to using Helm for easier management.
 Full Terraform integration for GKE cluster provisioning.
 
 A seamless DevOps pipeline that automates building, testing, and deploying applications with efficiency and scalability.
+
