@@ -6,7 +6,7 @@ pipeline {
         IMAGE_TAG = "java_calculator"
         DOCKER_HUB_USER = credentials('dockerhub')
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-key')
-        DEPLOY_YAML = 'kubernetes/deployment.yaml'
+        DEPLOY_YAML = 'deployment.yaml'
         CLUSTER_NAME = 'cluster-1'
         ZONE = 'us-central1-c'
         IMAGE_NAME = "java_calculator"
