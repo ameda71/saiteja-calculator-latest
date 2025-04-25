@@ -124,7 +124,6 @@ pipeline {
             steps {
                 sh '''
                     kubectl apply -f $DEPLOY_YAML
-                    kubectl apply -f kubernetes/service.yaml
                     echo "Waiting for LoadBalancer IP to be assigned..."
                     sleep 50
                     kubectl get svc
