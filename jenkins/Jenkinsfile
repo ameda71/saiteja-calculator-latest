@@ -156,7 +156,7 @@ stage('Terraform Apply (Cluster)') {
         stage('Deploy to Cluster') {
             steps {
                 sh '''
-                    kubectl apply -f $DEPLOY_YAML
+                   kubectl apply -f $DEPLOY_YAML --validate=false
                     echo "Waiting for LoadBalancer IP to be assigned..."
                     sleep 50
                     kubectl get svc
