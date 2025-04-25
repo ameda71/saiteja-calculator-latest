@@ -100,10 +100,11 @@ pipeline {
                         terraform init
                         terraform plan \
                          -var="cluster_name=${CLUSTER_NAME}" \
-                         -var="zone=${ZONE}" 
+                         -var="zone=${ZONE}" \
+                         -out=tfplan
                         terraform apply \
                          -var="cluster_name=${CLUSTER_NAME}" \
-                         -var="zone=${ZONE}" --auto-approve
+                         -var="zone=${ZONE}" --auto-approve tfplan
                     '''
                 }
             }
