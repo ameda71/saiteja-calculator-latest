@@ -93,22 +93,50 @@ pipeline {
             }
         }
 
-        stage('Terraform Apply (Cluster)') {
-            steps {
-                dir('terraform') {
+
+
+stage('Terraform Apply (Cluster)') {
+    steps {
+        dir('terraform') {
+            script {
+                def clusterExists = sh(script: "gcloud container clusters describe ${CLUSTER_NAME} --zone ${ZONE} --project saicharan-452306", returnStatus: true) == 0
+                if (!clusterExists) {
+                    echo "✅ Cluster not found, applying Terraform to create it..."
                     sh '''
                         terraform init
                         terraform plan \
-                         -var="cluster_name=${CLUSTER_NAME}" \
-                         -var="zone=${ZONE}" \
-                         -out=tfplan
+                          -var="cluster_name=${CLUSTER_NAME}" \
+                          -var="zone=${ZONE}" \
+                          -out=tfplan
                         terraform apply \
-                         -var="cluster_name=${CLUSTER_NAME}" \
-                         -var="zone=${ZONE}" --auto-approve tfplan
+                          -var="cluster_name=${CLUSTER_NAME}" \
+                          -var="zone=${ZONE}" --auto-approve tfplan
                     '''
+                } else {
+                    echo "☁️ GKE cluster '${CLUSTER_NAME}' already exists. Skipping Terraform apply."
                 }
             }
         }
+    }
+}
+
+        
+        // stage('Terraform Apply (Cluster)') {
+        //     steps {
+        //         dir('terraform') {
+        //             sh '''
+        //                 terraform init
+        //                 terraform plan \
+        //                  -var="cluster_name=${CLUSTER_NAME}" \
+        //                  -var="zone=${ZONE}" \
+        //                  -out=tfplan
+        //                 terraform apply \
+        //                  -var="cluster_name=${CLUSTER_NAME}" \
+        //                  -var="zone=${ZONE}" --auto-approve tfplan
+        //             '''
+        //         }
+        //     }
+        // }
 
         stage('Wait for Cluster Access') {
             steps {
@@ -121,6 +149,10 @@ pipeline {
             }
         }
 
+
+
+
+        
         stage('Deploy to Cluster') {
             steps {
                 sh '''
