@@ -95,30 +95,31 @@ pipeline {
 
 
 
-stage('Terraform Apply (Cluster)') {
+stage('Terraform Apply - GKE') {
     steps {
         dir('terraform') {
             script {
-                def clusterExists = sh(script: "gcloud container clusters describe ${CLUSTER_NAME} --zone ${ZONE} --project saicharan-452306", returnStatus: true) == 0
-                if (!clusterExists) {
+                // Check if GKE cluster exists
+                def clusterExists = sh(
+                    script: "gcloud container clusters describe cluster-1 --zone us-central1-c --project saicharan-452306 || echo 'not-found'",
+                    returnStdout: true
+                ).trim()
+
+                if (clusterExists.contains("not-found")) {
                     echo "✅ Cluster not found, applying Terraform to create it..."
-                    sh '''
+
+                    sh """
                         terraform init
-                        terraform plan \
-                          -var="cluster_name=${CLUSTER_NAME}" \
-                          -var="zone=${ZONE}" \
-                          -out=tfplan
-                        terraform apply \
-                          -var="cluster_name=${CLUSTER_NAME}" \
-                          -var="zone=${ZONE}" --auto-approve tfplan
-                    '''
+                        terraform apply -var=cluster_name=cluster-1 -var=zone=us-central1-c --auto-approve
+                    """
                 } else {
-                    echo "☁️ GKE cluster '${CLUSTER_NAME}' already exists. Skipping Terraform apply."
+                    echo "✅ Cluster already exists. Skipping Terraform apply."
                 }
             }
         }
     }
 }
+
 
         
         // stage('Terraform Apply (Cluster)') {
