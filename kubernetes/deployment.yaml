@@ -21,3 +21,16 @@ spec:
         - name: SPRING_PROFILES_ACTIVE
           value: "prod"
 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: calculator-app-service
+spec:
+  selector:
+    app: calculator-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8085
+  type: LoadBalancer  # If using a cloud provider, otherwise use ClusterIP
