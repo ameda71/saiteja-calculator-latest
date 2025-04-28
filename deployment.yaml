@@ -17,9 +17,9 @@ spec:
         image: saicharan12121/java_calculator:1
         ports:
         - containerPort: 8085
-        env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: "prod"
+        # env:
+        # - name: SPRING_PROFILES_ACTIVE
+        #   value: "prod"
 
 ---
 apiVersion: v1
