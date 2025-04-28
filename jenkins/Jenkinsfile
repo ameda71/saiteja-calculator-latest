@@ -101,7 +101,7 @@ stage('Terraform Apply - GKE') {
             script {
                 // Check if GKE cluster exists
                 def clusterExists = sh(
-                    script: "gcloud container clusters describe cluster-1 --zone us-central1-c --project saicharan-452306 || echo 'not-found'",
+                    script: "gcloud container clusters describe cluster-1 --zone us-central1-c --project saicharan-457910 || echo 'not-found'",
                     returnStdout: true
                 ).trim()
 
@@ -144,7 +144,7 @@ stage('Terraform Apply - GKE') {
                 retry(3) {
                     sh '''
                         sleep 20
-                        gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${ZONE} --project saicharan-452306
+                        gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${ZONE} --project saicharan-457910
                     '''
                 }
             }
