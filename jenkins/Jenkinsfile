@@ -166,6 +166,10 @@ stage('Terraform Apply - GKE') {
             }
         }
 
+//          --validate=false in kubectl apply skips strict YAML validation;
+// → if your YAML is correct, you can remove it,
+// → but keeping it helps avoid errors from small mistakes during deployment.
+
         stage('Get Service') {
             steps {
                 sh '''
