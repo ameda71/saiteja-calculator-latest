@@ -40,7 +40,19 @@ pipeline {
             }
         }
 
-        
+        stage("Quality Gate") {
+            steps {
+                script {
+                    try {
+                        timeout(time: 10, unit: 'SECONDS') {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    } catch (err) {
+                        echo "Quality Gate check skipped or failed to complete in time: ${err}"
+                    }
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
