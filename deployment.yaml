@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: calculator-app
-        image: saicharan12121/flaskapp:v1
+        image: saicharan12121/haress_push
         ports:
         - containerPort: 8085
         # env:
@@ -32,5 +32,5 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 5000
+      targetPort: 8085
   type: LoadBalancer  # If using a cloud provider, otherwise use ClusterIP
